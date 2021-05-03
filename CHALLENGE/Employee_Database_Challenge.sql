@@ -1,0 +1,115 @@
+-----DELIVERABLE 1-----
+--Import CSV files and create tables for PH_EmployeesDB
+create table Departments (
+	DEPT_NO VARCHAR(4) NOT NULL,
+	DEPT_NAME VARCHAR(40) NOT NULL,
+FOREIGN KEY (DEPT_NO) REFERENCES Dept_Manager (DEPT_NO),
+FOREIGN KEY (DEPT_NO) REFERENCES Dept_Employee (DEPT_NO),
+	PRIMARY Key (DEPT_NO),
+	UNIQUE (DEPT_NAME)
+);
+
+create table Employees (
+	EMP_NO INT NOT NULL,
+	BIRTH_DATE DATE NOT NULL,
+	FIRST_NAME VARCHAR NOT NULL,
+	LAST_NAME VARCHAR NOT NULL,
+	GENDER VARCHAR NOT NULL,
+	HIRE_DATE DATE NOT NULL,
+FOREIGN KEY (EMP_NO) REFERENCES Dept_Manager (EMP_NO),
+FOREIGN KEY (EMP_NO) REFERENCES Dept_Employee (EMP_NO),
+FOREIGN KEY (EMP_NO) REFERENCES Titles (EMP_NO),
+FOREIGN KEY (EMP_NO) REFERENCES Salaries (EMP_NO),
+	PRIMARY Key (EMP_NO)
+);
+
+CREATE TABLE Dept_Managers (
+	DEPT_NO VARCHAR(4) NOT NULL,
+    EMP_NO INT NOT NULL,
+    FROM_DATE DATE NOT NULL,
+    TO_DATE DATE NOT NULL,
+FOREIGN KEY (DEPT_NO) REFERENCES Departments (DEPT_NO),
+FOREIGN KEY (EMP_NO) REFERENCES Employees (EMP_NO),
+    PRIMARY KEY (DEPT_NO, EMP_NO)
+);
+
+CREATE TABLE Salaries (
+	EMP_NO INT NOT NULL,
+	SALARY INT NOT NULL,
+	FROM_DATE DATE NOT NULL,
+	TO_DATE DATE NOT NULL,
+FOREIGN KEY (EMP_NO) REFERENCES Employees (EMP_NO),
+FOREIGN KEY (EMP_NO) REFERENCES Dept_Employee (EMP_NO),
+FOREIGN KEY (EMP_NO) REFERENCES Titles (TITLE),
+	PRIMARY KEY (EMP_NO)
+);
+
+CREATE TABLE Dept_Employees (
+	EMP_NO INT NOT NULL,
+	DEPT_NO VARCHAR(4) NOT NULL,
+    FROM_DATE DATE NOT NULL,
+    TO_DATE DATE NOT NULL,
+FOREIGN KEY (EMP_NO) REFERENCES Employees (EMP_NO),
+FOREIGN KEY (DEPT_NO) REFERENCES Departments (DEPT_NO),
+FOREIGN KEY (EMP_NO) REFERENCES Salaries (EMP_NO),
+    PRIMARY KEY (EMP_NO, DEPT_NO)
+);
+
+CREATE TABLE Titles (
+	EMP_NO INT NOT NULL,
+	TITLE VARCHAR(40) NOT NULL,
+    FROM_DATE DATE NOT NULL,
+    TO_DATE DATE NOT NULL,
+FOREIGN KEY (EMP_NO) REFERENCES Salaries (EMP_NO),
+FOREIGN KEY (EMP_NO) REFERENCES Employees (EMP_NO),
+    PRIMARY KEY (EMP_NO, TITLE, FROM_DATE)
+);
+
+--------------------------------
+--RETIREMENT TABLE
+SELECT	E.EMP_NO,
+		E.FIRST_NAME,
+		E.LAST_NAME,
+		tl.TITLE,
+		tl.FROM_DATE,
+		tl.TO_DATE
+INTO RETIREMENT_TITLE
+FROM EMPLOYEES AS E
+INNER JOIN TITLES AS TL
+ON (E.EMP_NO = TL.EMP_NO)
+WHERE (E.BIRTH_DATE BETWEEN '1952-01-01' AND '1955-12-31')
+ORDER BY EMP_NO ASC;
+
+-- Use Distinct with Orderby to remove duplicate rows for part 2/Deliverable 1
+SELECT DISTINCT ON (rt.emp_no) rt.emp_no,
+rt.first_name,
+rt.last_name,
+rt.title
+INTO unique_titles
+FROM retirement_title AS rt
+ORDER BY emp_no ASC, to_date DESC;
+
+SELECT COUNT(ut.emp_no),ut.title
+INTO retiring_titles
+FROM unique_titles as ut
+GROUP BY title 
+ORDER BY COUNT(title) DESC;
+
+-----DELIVERABLE 2-----
+SELECT DISTINCT ON(e.emp_no)e.emp_no,
+e.first_name,
+e.last_name,
+e.birth_date,
+de.from_date,
+de.to_date,
+tl.title
+--DISTINCT ON(emp_no)
+INTO mentor_eligibility
+FROM employees AS e
+INNER JOIN dept_employees AS de
+ON (e.emp_no = de.emp_no)
+INNER JOIN titles AS tl
+ON (e.emp_no = tl.emp_no)
+WHERE (e.birth_date BETWEEN '1965-01-01' AND '1965-12-31')
+AND (de.to_date = '9999-01-01')
+ORDER BY emp_no;
